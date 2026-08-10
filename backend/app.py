@@ -18,16 +18,11 @@ class ApiHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(data)))
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(data)
 
     def do_OPTIONS(self):
-        self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.end_headers()
+        self.send_json(405, {"error": "Method not allowed"})
 
     def do_GET(self):
         if self.path == "/api/recommendations":
@@ -43,7 +38,7 @@ class ApiHandler(BaseHTTPRequestHandler):
                 movie_id = int(parts[3])
                 if movie_id not in {movie["id"] for movie in MOVIES} or not isinstance(rating, int) or not 1 <= rating <= 5:
                     raise ValueError
-            except (KeyError, ValueError, json.JSONDecodeError):
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError):
                 self.send_json(400, {"error": "rating must be an integer from 1 to 5"})
                 return
             RATINGS[movie_id] = rating
